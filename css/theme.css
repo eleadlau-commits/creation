@@ -1,0 +1,47 @@
+/* Design tokens. Every colour in the app comes from these variables.
+   Palettes (js/plugins/palettes.js) and settings (js/ui/theme.js) override them
+   on <html> or on a single room view. Light values first, then dark. */
+
+:root {
+  --ground: #eceff2;
+  --surface: #ffffff;
+  --ink: #1b2130;
+  --ink-2: #5a6374;
+  --line: #d3d8e0;
+  --dot: #c4cad4;
+  --accent: #1f7a68;
+  --accent-ink: #ffffff;
+  --accent-soft: #d7ece6;
+  --danger: #b4392f;
+  --room-s: 42%;          /* saturation of room fills */
+  --room-l: 87%;          /* lightness of room fills */
+  --room-stroke-l: 62%;   /* lightness of room outlines */
+  --pill-l: 93%;          /* lightness of tinted items */
+  --pill-line-l: 72%;     /* lightness of tinted item outlines */
+  --field-a: .30;         /* opacity of fuzzy fields */
+  --grid-img: radial-gradient(circle, var(--dot) 1px, transparent 1.4px);
+  --grid-size: 22px 22px;
+  --shadow: 0 1px 2px rgba(27, 33, 48, .08), 0 4px 14px rgba(27, 33, 48, .07);
+
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #13161b; --surface: #1d2128; --ink: #e6e9ef; --ink-2: #98a1b0; --line: #2f353f; --dot: #2c323b;
+    --accent: #52c3a7; --accent-ink: #0d1f1a; --accent-soft: #1c3631; --danger: #ef7d71;
+    --room-s: 26%; --room-l: 25%; --room-stroke-l: 42%; --pill-l: 22%; --pill-line-l: 40%; --field-a: .26;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 6px 18px rgba(0, 0, 0, .35);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #13161b; --surface: #1d2128; --ink: #e6e9ef; --ink-2: #98a1b0; --line: #2f353f; --dot: #2c323b;
+  --accent: #52c3a7; --accent-ink: #0d1f1a; --accent-soft: #1c3631; --danger: #ef7d71;
+  --room-s: 26%; --room-l: 25%; --room-stroke-l: 42%; --pill-l: 22%; --pill-line-l: 40%; --field-a: .26;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 6px 18px rgba(0, 0, 0, .35);
+  color-scheme: dark;
+}

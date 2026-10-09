@@ -1,0 +1,20 @@
+/* The rooms screen: squircle rooms on the ground. */
+
+.room { position: absolute; cursor: pointer; user-select: none; touch-action: none; }
+.room-body { position: absolute; inset: 0; }
+.room svg.shape { position: absolute; inset: 0; overflow: visible; }
+.room svg.shape path { fill: hsl(var(--h) var(--room-s) var(--room-l)); stroke: hsl(var(--h) 30% var(--room-stroke-l)); transition: filter .15s; }
+.room:hover svg.shape path { filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .12)); }
+.room .inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10%; text-align: center; gap: 4px; overflow: hidden; }
+.room .rname { font-family: var(--font-display); font-weight: 650; line-height: 1.02; letter-spacing: -.015em; text-wrap: balance; overflow-wrap: anywhere; outline: none; border-radius: 6px; color: var(--ink); }
+.room .rname[contenteditable="true"] { background: var(--surface); padding: 0 6px; cursor: text; }
+.room .rmeta { font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); letter-spacing: .03em; white-space: nowrap; }
+.room .resize { position: absolute; right: 2px; bottom: 2px; width: 22px; height: 22px; cursor: nwse-resize; opacity: 0; transition: opacity .15s; z-index: 2; }
+.room:hover .resize { opacity: 1; }
+.room .resize::before { content: ""; position: absolute; right: 5px; bottom: 5px; width: 9px; height: 9px; border-right: 2px solid var(--ink-2); border-bottom: 2px solid var(--ink-2); border-bottom-right-radius: 4px; }
+@media (hover: none) { .room .resize { opacity: .8; } }
+
+.banner { position: absolute; left: 16px; bottom: 16px; right: 16px; max-width: 540px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; box-shadow: var(--shadow);
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap; z-index: 4; cursor: default; }
+.banner p { margin: 0; flex: 1 1 220px; color: var(--ink-2); line-height: 1.45; }
+.banner p b { color: var(--ink); font-weight: 600; }
