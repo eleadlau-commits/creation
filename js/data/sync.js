@@ -89,6 +89,7 @@ export const Sync = {
     this.set("syncing"); // until the first round of changes has gone up
     await this.push();
     if (this.status === "syncing") this.set("synced");
+    await SyncFiles.uploadMissing();
     SyncFiles.fetchMissing();
     SyncFiles.tidy();
   },
