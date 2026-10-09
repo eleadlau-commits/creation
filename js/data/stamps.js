@@ -13,6 +13,11 @@ export function resetStamps(state) {
   for (const kind of KINDS) for (const [key, rec] of Object.entries(state[kind] || {})) seen.set(kind + "/" + key, text(rec));
 }
 
+/** A record arrived from the account: remember it as it is, so it isn't stamped as a change here. */
+export function markSeen(kind, key, rec) {
+  if (rec) seen.set(kind + "/" + key, text(rec)); else seen.delete(kind + "/" + key);
+}
+
 /** Give every record that changed since last time the current time as updatedAt. */
 export function stampChanges(state) {
   const t = Date.now();

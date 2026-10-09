@@ -7,6 +7,7 @@ import { formatOf } from "../core/registry.js";
 import { Query, Act } from "../data/actions.js";
 import { UI } from "./state.js";
 import { historySection } from "./history-list.js";
+import { Sync } from "../data/sync.js";
 
 const root = () => document.getElementById("details-root");
 /** Always read the item fresh: the panel isn't redrawn while someone types in it. */
@@ -75,6 +76,7 @@ function panel(it) {
     h("div", { class: "drawer-head" }, h("h3", {}, "Details"),
       h("button", { class: "btn ghost", onclick: closeDetails, "aria-label": "Close details" }, "Close")),
     h("div", { class: "drawer-body" },
+      Sync.tooBig.has(it.id) && h("p", { class: "help error" }, "This item is too large to sync to your account (over 1 MB, usually a very long note). It's kept in this browser."),
       field("Title", title),
       field("Note", note),
       h("div", { class: "group" }, h("h5", {}, "Sources"),

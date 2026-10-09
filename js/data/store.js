@@ -35,6 +35,13 @@ export const Data = {
     Storage.scheduleSave(this.state);
     if (undoLabel) this.onUndoable(undoLabel, () => this.undo());
   },
+  /** Changes that came from the account. Not undoable here (Undo would bring back the old copy). */
+  applyRemote(fn) {
+    fn(this.state);
+    this.undoSnap = null;
+    this.emit();
+    Storage.scheduleSave(this.state);
+  },
   /** Save without re-rendering (panning, live dragging already shown on screen). */
   quiet(fn) {
     if (fn) fn(this.state);

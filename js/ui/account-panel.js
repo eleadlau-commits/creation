@@ -3,8 +3,18 @@
 
 import { h } from "../core/dom.js";
 import { Account } from "../storage/account.js";
+import { Sync } from "../data/sync.js";
+import { askSignOut } from "./account-choice.js";
 
-const NOT_YET = "Syncing between devices arrives in the next update. Until then your work stays saved in this browser, signed in or not.";
+const WHAT = "Signed in, your work is saved to your account and kept the same on every device where you sign in. This browser keeps a copy, so it also works offline. Images and item history follow in a later update.";
+const SYNC = { connecting: "Connecting to your account…", syncing: "Syncing…", synced: "Everything is synced to your account.", offline: "Offline. Changes will sync when you're back online.", error: "" };
+
+async function signOut() {
+  const choice = await askSignOut();
+  if (!choice) return;
+  await Sync.signOut(choice === "remove");
+  await Account.signOut();
+}
 
 export function accountPanel() {
   const s = Account.state;
@@ -17,8 +27,9 @@ export function accountPanel() {
   if (s.status === "signed-in") {
     return h("div", { class: "group" },
       h("p", {}, "Signed in as ", h("b", {}, s.user.name || s.user.email), s.user.name && s.user.email ? ` (${s.user.email})` : ""),
-      h("p", { class: "help" }, NOT_YET),
-      h("div", { class: "row" }, h("button", { class: "btn", id: "sign-out", onclick: () => Account.signOut() }, "Sign out")),
+      h("p", { class: "help", id: "sync-state" }, Sync.error || SYNC[Sync.status] || ""),
+      h("p", { class: "help" }, WHAT),
+      h("div", { class: "row" }, h("button", { class: "btn", id: "sign-out", onclick: signOut }, "Sign out")),
       error);
   }
 
@@ -41,6 +52,6 @@ export function accountPanel() {
     s.linkSent
       ? h("p", {}, `We sent a sign-in link to ${s.linkSent}. Open it in this browser to finish. It may take a minute, and can land in spam.`)
       : [email, h("div", { class: "row" }, h("button", { class: "btn", id: "send-link", onclick: send }, "Email me a sign-in link"))],
-    h("p", { class: "help" }, NOT_YET),
+    h("p", { class: "help" }, WHAT),
     error);
 }

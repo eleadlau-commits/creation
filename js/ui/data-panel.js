@@ -9,17 +9,19 @@ import { UI } from "./state.js";
 
 const toDataURL = (blob) => new Promise((resolve) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.readAsDataURL(blob); });
 
-async function exportFile() {
+/** Download a workspace (this one by default) as a backup file. label goes in the file name. */
+export async function exportFile(state = Data.state, label = "") {
   const blobs = {};
-  for (const it of Object.values(Data.state.items)) {
+  for (const it of Object.values(state.items)) {
     if (it.format !== "image" || !it.content?.blob) continue;
     const b = await Storage.blobs.get(it.content.blob);
     if (b) blobs[it.content.blob] = await toDataURL(b);
   }
   const all = await Storage.history.all().catch(() => ({}));
-  const history = Object.fromEntries(Object.entries(all).filter(([id]) => Data.state.items[id]));
-  const file = new Blob([JSON.stringify({ app: "creation", exportedAt: new Date().toISOString(), state: Data.state, blobs, history })], { type: "application/json" });
-  const a = h("a", { href: URL.createObjectURL(file), download: `creation-backup-${new Date().toISOString().slice(0, 10)}.json` });
+  const history = Object.fromEntries(Object.entries(all).filter(([id]) => state.items[id]));
+  const file = new Blob([JSON.stringify({ app: "creation", exportedAt: new Date().toISOString(), state, blobs, history })], { type: "application/json" });
+  const name = `creation-backup-${label ? label + "-" : ""}${new Date().toISOString().slice(0, 10)}.json`;
+  const a = h("a", { href: URL.createObjectURL(file), download: name });
   document.body.append(a);
   a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
@@ -57,7 +59,7 @@ export function dataPanel() {
   return h("div", { class: "group" },
     h("p", { class: "help" }, "Your workspace is saved in this browser. Download a backup now and then; it includes your images and the history of your items."),
     h("div", { class: "row" },
-      h("button", { class: "btn primary", onclick: exportFile }, "Download backup"),
+      h("button", { class: "btn primary", onclick: () => exportFile() }, "Download backup"),
       h("button", { class: "btn", onclick: () => file.click() }, "Import backup…"), file),
     msg,
     h("h5", {}, "Start over"),
