@@ -1,4 +1,4 @@
-// Backups: download everything (including images) as one file, or import one.
+// Backups: download everything (including images and item history) as one file, or import one.
 
 import { h } from "../core/dom.js";
 import { Data } from "../data/store.js";
@@ -16,7 +16,9 @@ async function exportFile() {
     const b = await Storage.blobs.get(it.content.blob);
     if (b) blobs[it.content.blob] = await toDataURL(b);
   }
-  const file = new Blob([JSON.stringify({ app: "creation", exportedAt: new Date().toISOString(), state: Data.state, blobs })], { type: "application/json" });
+  const all = await Storage.history.all().catch(() => ({}));
+  const history = Object.fromEntries(Object.entries(all).filter(([id]) => Data.state.items[id]));
+  const file = new Blob([JSON.stringify({ app: "creation", exportedAt: new Date().toISOString(), state: Data.state, blobs, history })], { type: "application/json" });
   const a = h("a", { href: URL.createObjectURL(file), download: `creation-backup-${new Date().toISOString().slice(0, 10)}.json` });
   document.body.append(a);
   a.click();
@@ -30,6 +32,9 @@ async function importFile(file, msg) {
     if (!state) throw new Error("not-creation");
     for (const [id, url] of Object.entries(parsed.blobs || {})) {
       await Storage.blobs.put(await (await fetch(url)).blob(), id);
+    }
+    for (const [id, versions] of Object.entries(parsed.history || {})) {
+      if (state.items[id] && Array.isArray(versions)) await Storage.history.put(id, versions);
     }
     state.sample = false;
     Data.load(state);
@@ -50,7 +55,7 @@ export function dataPanel() {
     onchange: () => file.files[0] && importFile(file.files[0], msg) });
   const replace = (state, label) => Data.commit((s) => { Object.keys(s).forEach((k) => delete s[k]); Object.assign(s, state); }, label);
   return h("div", { class: "group" },
-    h("p", { class: "help" }, "Your workspace is saved in this browser. Download a backup now and then; it includes your images."),
+    h("p", { class: "help" }, "Your workspace is saved in this browser. Download a backup now and then; it includes your images and the history of your items."),
     h("div", { class: "row" },
       h("button", { class: "btn primary", onclick: exportFile }, "Download backup"),
       h("button", { class: "btn", onclick: () => file.click() }, "Import backup…"), file),

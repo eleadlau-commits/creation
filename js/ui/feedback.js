@@ -5,7 +5,7 @@ import { Storage } from "../storage/storage.js";
 const STATUS = {
   saved: ["Saved in this browser", ""],
   saving: ["Saving…", "busy"],
-  error: ["Couldn't save: browser storage is full", "warn"],
+  error: ["Couldn't save in this browser", "warn"],
 };
 
 export function statusEl() {

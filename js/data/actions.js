@@ -2,10 +2,11 @@
 // UI code calls these instead of touching Data.state directly.
 
 import { Data } from "./store.js";
-import { uid, byDate, trunc } from "../core/dom.js";
+import { uid, byDate, trunc, clone } from "../core/dom.js";
 import { modeOf, itemSummary } from "../core/registry.js";
 import { isRoomItem, roomIdOf, removeFromLayouts, freeSpot } from "./nesting.js";
 import { richDefaults } from "./migrations.js";
+import { History } from "./history.js";
 
 const ROOM_HUES = [205, 152, 36, 328, 262, 96, 12, 182];
 
@@ -125,8 +126,16 @@ export const Act = {
     });
     return item;
   },
-  updateItem(id, patch) {
+  /** Every finished edit of an item is also recorded in its history. */
+  updateItem(id, patch, { mergeHistory = true } = {}) {
+    const before = clone(Query.item(id));
     Data.commit((s) => Object.assign(s.items[id], patch));
+    if (before && !isRoomItem(before)) History.record(before, Query.item(id), { merge: mergeHistory });
+  },
+  /** Bring back an earlier version. This is recorded as a new version, never merged. */
+  restoreVersion(id, version) {
+    const it = Query.item(id);
+    if (it) Act.updateItem(id, History.patchFor(it, version), { mergeHistory: false });
   },
   /** Deleting an item removes it from every mode of its room. */
   deleteItem(id) {
