@@ -50,7 +50,8 @@ js/
   storage/blobs.js         image adapter (IndexedDB, database "creation-files")
   storage/firebase-config.js  Firebase web config (public by design) and the pinned SDK version
   storage/account.js       sign in/out (Firebase Auth from the CDN, loaded only when needed)
-  storage/cloud.js         Firestore adapter: one document per room, item, layout + meta; deletion markers
+  storage/cloud.js         Firestore adapter: one document per room, item, layout + meta; deletion markers; item history
+  storage/cloud-files.js   Cloud Storage adapter: image files at users/{uid}/blobs/{blobId}
   data/store.js            Data: state, commit(), undo, subscribe
   data/actions.js          Query (read) and Act (change)
   data/migrations.js       data shape, version number, upgrade steps
@@ -59,6 +60,7 @@ js/
   data/stamps.js           stamps updatedAt on changed rooms, items and layouts before each save
   data/sync.js             syncing with the account: first sign-in, sending changes, receiving them
   data/sync-merge.js       pure rules: which copy of a record wins (latest updatedAt), the shadow
+  data/sync-files.js       image files: upload before the item, download what arrives, tidy unused
   data/presets.js          starting room types and flavours
   data/sample.js           first-run sample workspace
   settings/registry.js     Settings engine: define, resolve, inherit
@@ -143,7 +145,16 @@ through `Data.applyRemote` (not undoable, not re-stamped). For each record the l
 `updatedAt` wins (`decide()` in `sync-merge.js`). First sign-in: an empty account gets
 this browser's work; a different one triggers the keep/replace question, and the
 version not kept is downloaded as a backup. Items over ~900 KB stay local
-(`Sync.tooBig`). Images and history are not synced yet. Security comes from
+(`Sync.tooBig`).
+
+**Images** sync through `js/data/sync-files.js`: a file is uploaded to Cloud Storage
+before the item using it is sent; pictures of items that arrive are downloaded into
+this browser (so they work offline), or shown from the account by address if the
+bucket's CORS doesn't allow downloads. Files no item uses are removed from the
+account once they are over a day old. **History** is kept per item in
+`users/{uid}/history/{itemId}`: `History.remote` (set while syncing) merges the
+account's versions with this browser's when a details panel opens and after each
+recorded edit (`mergeVersions()`: by date, one original, at most 50). Security comes from
 `firestore.rules` / `storage.rules`: each person can only reach `users/{their uid}`.
 All changes go through `Data.commit(fn, undoLabel?)`, usually via `Act.*`.
 
