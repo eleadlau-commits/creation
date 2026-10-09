@@ -28,6 +28,7 @@ const MESSAGES = {
 const friendly = (e) => MESSAGES[e?.code] || "Signing in didn't work: " + (e?.message || e);
 
 export const Account = {
+  app: null, // the Firebase app, once loaded (the cloud adapter uses it)
   state: { status: firebaseConfig ? "idle" : "off", user: null, error: null, needsEmail: false, linkSent: null },
   subscribe(fn) { listeners.add(fn); },
   set(patch) { Object.assign(this.state, patch); listeners.forEach((fn) => fn(this.state)); },
@@ -46,10 +47,11 @@ export const Account = {
       loading = (async () => {
         const [app, a] = await Promise.all([sdk("app"), sdk("auth")]);
         fb = a;
-        auth = a.getAuth(app.initializeApp(firebaseConfig));
+        this.app = app.initializeApp(firebaseConfig);
+        auth = a.getAuth(this.app);
         a.onAuthStateChanged(auth, (u) => {
           remember(HINT, u ? "1" : null);
-          this.set({ status: u ? "signed-in" : "signed-out", user: u ? { name: u.displayName || "", email: u.email || "" } : null });
+          this.set({ status: u ? "signed-in" : "signed-out", user: u ? { uid: u.uid, name: u.displayName || "", email: u.email || "" } : null });
         });
         if (this.isEmailLink()) await this.finishEmailLink(recall(EMAIL));
       })().catch((e) => {

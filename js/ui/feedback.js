@@ -1,6 +1,7 @@
 // Small feedback pieces: the save-status indicator and the undo toast.
 import { h } from "../core/dom.js";
 import { Storage } from "../storage/storage.js";
+import { Sync } from "../data/sync.js";
 
 const STATUS = {
   saved: ["Saved in this browser", ""],
@@ -8,8 +9,17 @@ const STATUS = {
   error: ["Couldn't save in this browser", "warn"],
 };
 
+const SYNCED = {
+  connecting: ["Syncing…", "busy"],
+  syncing: ["Syncing…", "busy"],
+  synced: ["Synced to your account", ""],
+  offline: ["Offline — will sync when back", "warn"],
+  error: ["Couldn't sync", "warn"],
+};
+
 export function statusEl() {
-  const [text, cls] = STATUS[Storage.status] || STATUS.saved;
+  const [text, cls] = Storage.status === "error" ? STATUS.error
+    : Sync.status !== "off" ? SYNCED[Sync.status] : STATUS[Storage.status] || STATUS.saved;
   return h("span", { class: "status " + cls, "data-status": "" }, h("i"), text);
 }
 export function refreshStatus() {

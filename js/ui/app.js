@@ -14,6 +14,9 @@ import { renderDrawer } from "./drawer.js";
 import { renderDetails, closeDetails } from "./details.js";
 import { isTyping } from "../core/dom.js";
 import { Account } from "../storage/account.js";
+import { Sync } from "../data/sync.js";
+import { askWhichToKeep } from "./account-choice.js";
+import { exportFile } from "./data-panel.js";
 
 function renderMain() {
   if (UI.editingItem) return; // never rebuild under an open editor
@@ -31,7 +34,15 @@ export function startUI() {
   UI.renderDetails = renderDetails;
   Data.onUndoable = (label, undo) => Toast.show(label, undo);
   Storage.onStatus = refreshStatus;
-  Account.subscribe(() => {
+  Sync.ask = askWhichToKeep;
+  Sync.downloadBackup = (state, label) => exportFile(state, label);
+  Sync.subscribe(() => {
+    refreshStatus();
+    if (UI.drawer.open && UI.drawer.tab === "account") renderDrawer();
+  });
+  Account.subscribe((a) => {
+    if (a.status === "signed-in") Sync.start(Account.app, a.user.uid);
+    if (a.status === "signed-out") Sync.stop();
     if (UI.screen === "home") UI.render();
     if (UI.drawer.open && UI.drawer.tab === "account") renderDrawer();
   });

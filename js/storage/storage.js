@@ -15,6 +15,8 @@ export const Storage = {
   chain: Promise.resolve(),
   /** Set by the data layer: runs just before each save (stamps changed records). */
   beforeSave: null,
+  /** Set by the data layer: runs after each successful save (sends changes to the account). */
+  afterSave: null,
 
   /** Resolves with the saved workspace, or null on a first visit. */
   load() {
@@ -33,6 +35,7 @@ export const Storage = {
     this.beforeSave?.(state);
     this.chain = this.chain.then(() => Workspace.save(state)).then((ok) => {
       if (!this.pending) this.setStatus(ok ? "saved" : "error");
+      if (ok) this.afterSave?.();
     });
     return this.chain;
   },

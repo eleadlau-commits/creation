@@ -50,12 +50,15 @@ js/
   storage/blobs.js         image adapter (IndexedDB, database "creation-files")
   storage/firebase-config.js  Firebase web config (public by design) and the pinned SDK version
   storage/account.js       sign in/out (Firebase Auth from the CDN, loaded only when needed)
+  storage/cloud.js         Firestore adapter: one document per room, item, layout + meta; deletion markers
   data/store.js            Data: state, commit(), undo, subscribe
   data/actions.js          Query (read) and Act (change)
   data/migrations.js       data shape, version number, upgrade steps
   data/nesting.js          rooms inside rooms: helpers and the consistency check
   data/history.js          item history: record (5-minute merge, max 50), list, restore
   data/stamps.js           stamps updatedAt on changed rooms, items and layouts before each save
+  data/sync.js             syncing with the account: first sign-in, sending changes, receiving them
+  data/sync-merge.js       pure rules: which copy of a record wins (latest updatedAt), the shadow
   data/presets.js          starting room types and flavours
   data/sample.js           first-run sample workspace
   settings/registry.js     Settings engine: define, resolve, inherit
@@ -77,7 +80,8 @@ js/
   ui/drawer.js             settings drawer and its tabs
   ui/controls.js           setting controls generated from definitions
   ui/data-panel.js         backup download / import
-  ui/account-panel.js      Settings → Account: sign in with Google or an email link, sign out
+  ui/account-panel.js      Settings → Account: sign in with Google or an email link, sync state, sign out
+  ui/account-choice.js     the two questions: which version to keep, and what to do on sign-out
   ui/theme.js              settings -> CSS variables
   ui/feedback.js           save status, undo toast
 ```
@@ -128,7 +132,18 @@ the changed ones just before saving. Syncing (Phase 3) uses it: latest change wi
 **Accounts** are optional. `js/storage/account.js` loads Firebase Auth from the CDN
 (version pinned in `firebase-config.js`) only when the Account tab opens, an email
 sign-in link is opened, or the person was signed in last time. Setting
-`firebaseConfig` to null switches accounts off. Security comes from
+`firebaseConfig` to null switches accounts off.
+
+**Syncing** (`js/data/sync.js`) runs only while signed in. This browser's copy stays
+the working copy. After each save, records whose `updatedAt` differs from the
+"shadow" (what this browser last agreed with the account, kept in localStorage per
+account) are sent in batches; deletions are sent as `{ deleted: true, updatedAt }`
+markers. Changes from other devices arrive through Firestore listeners and go in
+through `Data.applyRemote` (not undoable, not re-stamped). For each record the latest
+`updatedAt` wins (`decide()` in `sync-merge.js`). First sign-in: an empty account gets
+this browser's work; a different one triggers the keep/replace question, and the
+version not kept is downloaded as a backup. Items over ~900 KB stay local
+(`Sync.tooBig`). Images and history are not synced yet. Security comes from
 `firestore.rules` / `storage.rules`: each person can only reach `users/{their uid}`.
 All changes go through `Data.commit(fn, undoLabel?)`, usually via `Act.*`.
 
