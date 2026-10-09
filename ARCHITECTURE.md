@@ -28,6 +28,7 @@ index.html                 page shell; links every CSS file and js/main.js
 css/
   theme.css                colour and font tokens (light + dark)
   base.css                 frame, bars, buttons, settings drawer, toast
+  home.css                 the home page
   rooms.css                the rooms screen
   room.css                 inside a room: pills, shelf, selection bar
   plugins/<name>.css       styles that belong to one plug-in
@@ -52,7 +53,8 @@ js/
   plugins/motions/*.js     still, bob, drift
   plugins/palettes.js      named colour palettes
   ui/app.js                render loop, keyboard
-  ui/state.js              interface state (screen, selection, drawer)
+  ui/state.js              interface state (screen: home | rooms | room, selection, drawer)
+  ui/home-screen.js        home page: title and "Create now" (every visit starts here)
   ui/rooms-screen.js       squircle rooms
   ui/room-view.js          inside a room; builds the mode `ctx`
   ui/canvas.js             spatial canvas shared by spatial modes

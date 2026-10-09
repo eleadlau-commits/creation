@@ -1,0 +1,9 @@
+/* The home page: the title and the way in. */
+
+.home { align-items: center; justify-content: center; background-image: var(--grid-img); background-size: var(--grid-size); }
+.home-inner { display: flex; flex-direction: column; align-items: center; gap: 28px; padding: 24px 16px; text-align: center; }
+.home-title { margin: 0; font-family: var(--font-display); font-weight: 650; letter-spacing: -.035em; line-height: .95; font-size: clamp(56px, 14vw, 132px); color: var(--ink); }
+.home-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.btn.big { font-size: 16px; padding: 10px 24px; }
+
+.brand-link { border: 0; background: none; padding: 0; cursor: pointer; color: inherit; }
