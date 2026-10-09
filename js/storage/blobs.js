@@ -32,6 +32,8 @@ async function tx(mode, fn) {
 }
 
 export const Blobs = {
+  /** Set by syncing: a web address for a file kept only in the account (or null). */
+  remoteUrl: null,
   async put(blob, id = uid("blob")) {
     await tx("readwrite", (s) => s.put(blob, id));
     return id;

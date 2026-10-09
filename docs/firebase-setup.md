@@ -52,11 +52,40 @@ These make sure only you can read or write your own data.
 ## 7. Images (Cloud Storage), needed for syncing images
 
 1. **Build → Storage → Get started.** Firebase may ask you to switch to the
-   pay-as-you-go **Blaze** plan and add a card. Personal use of Creation stays well
-   inside the free allowance, so normally nothing is charged, but check the current
-   Firebase pricing page, and consider setting a budget alert in Google Cloud.
-2. Use the same location as the database if offered, and production mode.
-3. **Storage → Rules**: replace everything with the contents of `storage.rules`, then **Publish**.
+   pay-as-you-go **Blaze** plan and add a card. Personal use of Creation normally stays
+   inside the free allowance, but check Firebase's current pricing page.
+2. **Location:** Firebase's free allowance for Storage has applied only to buckets in
+   some US locations (`us-central1`, `us-east1`, `us-west1`). Check the note on that
+   screen and pick a free one if it says so. It can't be changed later.
+3. Start in **production mode**.
+4. **Storage → Rules**: replace everything with the contents of `storage.rules`, then **Publish**.
+
+### Let your site download images (CORS)
+
+Without this, synced images still show while online, but can't be kept on the device
+for offline use. Done once:
+
+1. Open <https://console.cloud.google.com/?project=YOUR-PROJECT-ID> and click the
+   Cloud Shell icon **`>_`** (top right). Authorise it if asked.
+2. Paste this, with your site's address and your bucket name (it's the
+   `storageBucket` value in `js/storage/firebase-config.js`), and press Enter:
+
+```
+cat > cors.json <<'JSON'
+[{"origin": ["https://eleadlau-commits.github.io", "http://localhost:8000"], "method": ["GET"], "maxAgeSeconds": 3600}]
+JSON
+gcloud storage buckets update gs://creation-ba12c.firebasestorage.app --cors-file=cors.json
+```
+
+If it says no project is set, run `gcloud config set project YOUR-PROJECT-ID` first.
+This only allows reading, only from your site; the storage rules still decide whose files
+can be read. If you add a custom domain later, add it to the list and run it again.
+
+### A budget alert (recommended with Blaze)
+
+<https://console.cloud.google.com/billing> → your billing account → **Budgets & alerts**
+→ **Create budget**. Choose this project, an amount such as $1, and keep the email
+alerts. You'll get an email if costs ever start; nothing is stopped automatically.
 
 ## If something goes wrong
 
@@ -65,3 +94,5 @@ Creation shows a plain message in **Settings → Account**:
 - *"This website isn't allowed to sign in yet"*: step 4 is missing the site's address.
 - *"This way of signing in isn't switched on yet"*: step 3.
 - Signing in works but syncing fails with "permission denied": step 6 (rules not published).
+- Images don't appear on other devices: step 7 (Storage set up and its rules published).
+- Images appear on other devices but not offline: the CORS step in 7.

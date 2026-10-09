@@ -3,6 +3,7 @@
 //   users/{uid}/rooms/{roomId}
 //   users/{uid}/items/{itemId}
 //   users/{uid}/layouts/{roomId}__{modeId}
+//   users/{uid}/history/{itemId}         { versions: [...] }, read only when details open
 // Each record is its own document (Firestore caps one at 1 MB). A deleted record is
 // kept as a small marker { deleted: true, updatedAt } so the deletion syncs too.
 // Firestore is loaded from the CDN only once someone is signed in.
@@ -65,4 +66,19 @@ export const Cloud = {
     }
   },
   unwatch() { unsubs.forEach((u) => u()); unsubs = []; },
+
+  /** An item's history in the account (oldest first), or []. */
+  async readHistory(itemId) {
+    const snap = await fs.getDoc(fs.doc(db, "users", uid, "history", itemId));
+    return snap.exists() ? snap.data().versions || [] : [];
+  },
+  /** Save an item's history; the oldest versions (after the first) go if it's too large for one record. */
+  async writeHistory(itemId, versions) {
+    const list = versions.slice();
+    while (list.length > 2 && JSON.stringify(list).length > MAX_BYTES) list.splice(1, 1);
+    if (JSON.stringify(list).length > MAX_BYTES) return;
+    const batch = fs.writeBatch(db);
+    batch.set(fs.doc(db, "users", uid, "history", itemId), { versions: list, updatedAt: Date.now() });
+    await batch.commit();
+  },
 };

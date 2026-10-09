@@ -9,6 +9,8 @@ import { markSeen, stampChanges } from "./stamps.js";
 import { KINDS, metaOf, metaText, decide, liveOf, hasContent, sameContent, shadowOf } from "./sync-merge.js";
 import { Storage } from "../storage/storage.js";
 import { Cloud, MAX_BYTES } from "../storage/cloud.js";
+import { SyncFiles } from "./sync-files.js";
+import { History } from "./history.js";
 
 const LINK = "creation.syncedTo";          // the account this browser's workspace belongs to
 const SHADOW = (uid) => "creation.syncShadow." + uid;
@@ -49,6 +51,7 @@ export const Sync = {
     try {
       await Cloud.connect(app, uid);
       remote = await Cloud.readAll();
+      await SyncFiles.connect(app, uid);
     } catch (e) {
       console.warn("Couldn't reach the account:", e);
       this.set(navigator.onLine ? "error" : "offline", "Couldn't reach your account. Your work is still saved in this browser.");
@@ -82,8 +85,12 @@ export const Sync = {
     store.set(LINK, uid);
     store.set(SHADOW(uid), shadow);
     Cloud.watch((list) => this.receive(list), (e) => { console.warn(e); this.set("error", "Syncing stopped. Reload the page to try again."); });
-    this.set("synced");
+    History.remote = { read: (id) => Cloud.readHistory(id), write: (id, v) => Cloud.writeHistory(id, v) };
+    this.set("syncing"); // until the first round of changes has gone up
     await this.push();
+    if (this.status === "syncing") this.set("synced");
+    SyncFiles.fetchMissing();
+    SyncFiles.tidy();
   },
 
   /** Back after a while (or offline edits): settle every record both ways. */
@@ -126,6 +133,7 @@ export const Sync = {
 
   apply(list) {
     if (!list.length) { store.set(SHADOW(uid), shadow); return; }
+    queueMicrotask(() => SyncFiles.fetchMissing());
     Data.applyRemote((s) => {
       for (const { kind, key, data } of list) {
         if (kind === "meta") {
@@ -180,6 +188,11 @@ export const Sync = {
       writes.push({ kind: "meta", data: { ...metaOf(Data.state), updatedAt: now } });
       done.meta = { text, at: now };
     }
+    // Pictures go up before the items that use them; an item whose picture failed waits for next time.
+    for (const w of writes.slice()) {
+      const blob = w.kind === "items" && w.data.format === "image" && w.data.content?.blob;
+      if (blob && !(await SyncFiles.ensure(blob))) { writes.splice(writes.indexOf(w), 1); delete done["items/" + w.key]; }
+    }
     if (!writes.length) { if (this.status !== "synced") this.set("synced"); return; }
     this.set(navigator.onLine ? "syncing" : "offline");
     await Cloud.write(writes);
@@ -193,6 +206,8 @@ export const Sync = {
     clearTimeout(timer);
     await Promise.race([this.push(), new Promise((r) => setTimeout(r, 4000))]);
     Cloud.unwatch();
+    History.remote = null;
+    SyncFiles.reset();
     store.set(LINK, null);
     store.set(SHADOW(uid), null);
     uid = null;
@@ -210,6 +225,8 @@ export const Sync = {
     if (!uid) return;
     clearTimeout(timer);
     Cloud.unwatch();
+    History.remote = null;
+    SyncFiles.reset();
     uid = null;
     this.set("off");
   },

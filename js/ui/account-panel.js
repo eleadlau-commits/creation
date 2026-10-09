@@ -6,7 +6,7 @@ import { Account } from "../storage/account.js";
 import { Sync } from "../data/sync.js";
 import { askSignOut } from "./account-choice.js";
 
-const WHAT = "Signed in, your work is saved to your account and kept the same on every device where you sign in. This browser keeps a copy, so it also works offline. Images and item history follow in a later update.";
+const WHAT = "Signed in, your work is saved to your account and kept the same on every device where you sign in. This browser keeps a copy, so it also works offline. Images and item history are kept in your account too.";
 const SYNC = { connecting: "Connecting to your account…", syncing: "Syncing…", synced: "Everything is synced to your account.", offline: "Offline. Changes will sync when you're back online.", error: "" };
 
 async function signOut() {

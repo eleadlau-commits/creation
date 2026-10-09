@@ -10,7 +10,8 @@ export default {
   editable: false,
   render(item) {
     const img = h("img", { class: "img", alt: item.title || item.content?.name || "Image", draggable: false });
-    Storage.blobs.urlFor(item.content?.blob).then((url) => {
+    const id = item.content?.blob;
+    Storage.blobs.urlFor(id).then((url) => url || Storage.blobs.remoteUrl?.(id)).then((url) => {
       if (url) {
         img.addEventListener("load", () => img.dispatchEvent(new CustomEvent("itemresize", { bubbles: true })), { once: true });
         img.src = url;
