@@ -12,6 +12,7 @@ import { applyRoomTheme } from "./theme.js";
 import { buildCanvas } from "./canvas.js";
 import { buildShelf } from "./shelf.js";
 import { editItem, activate } from "./pill.js";
+import { openDetails } from "./details.js";
 
 /** The live context of the room on screen (rebuilt every render). */
 export let currentCtx = null;
@@ -113,6 +114,7 @@ function selectionBar(ctx) {
     return h("div", { class: "selbar", onpointerdown: stop },
       h("span", { class: "what" }, trunc(itemSummary(it), 40)),
       flavour,
+      h("button", { id: "details-btn", onclick: () => openDetails(it.id) }, "Details"),
       formatOf(it).editable && h("button", { onclick: () => { const el = pill(); if (el) editItem(el, it); } }, "Edit"),
       toShelf,
       h("button", { onclick: () => { UI.selection = null; Act.deleteItem(it.id); } }, "Delete everywhere"));

@@ -1,7 +1,7 @@
 // The first screen: squircle rooms on an open ground.
 // Rooms can be moved, resized and renamed; their look comes from room settings.
 
-import { h, svg, drag, clamp, hashSeed, placeCaretEnd } from "../core/dom.js";
+import { h, svg, drag, clamp, hashSeed, placeCaretEnd, afterPointer } from "../core/dom.js";
 import { applyMotion } from "../core/registry.js";
 import { squirclePath } from "../core/squircle.js";
 import { Settings } from "../settings/registry.js";
@@ -39,7 +39,7 @@ function rename(room, nameEl) {
     else UI.render();
   };
   nameEl.onkeydown = (ev) => { ev.stopPropagation(); if (ev.key === "Enter") { ev.preventDefault(); finish(true); } if (ev.key === "Escape") finish(false); };
-  nameEl.onblur = () => finish(true);
+  nameEl.onblur = () => afterPointer(() => finish(true));
 }
 
 /** Choosing rooms to group: shift-click, or the Select button. */

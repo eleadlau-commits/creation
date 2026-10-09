@@ -5,6 +5,7 @@ import { Data } from "./store.js";
 import { uid, byDate, trunc } from "../core/dom.js";
 import { modeOf, itemSummary } from "../core/registry.js";
 import { isRoomItem, roomIdOf, removeFromLayouts, freeSpot } from "./nesting.js";
+import { richDefaults } from "./migrations.js";
 
 const ROOM_HUES = [205, 152, 36, 328, 262, 96, 12, 182];
 
@@ -117,6 +118,7 @@ export const Act = {
   /** placeIn = { mode, x, y } to place the new item straight onto a canvas. */
   addItem(roomId, { format = "text", content = "", flavourId = null } = {}, placeIn) {
     const item = { id: uid("item"), roomId, format, flavourId, content, createdAt: Date.now() };
+    Object.assign(item, richDefaults(item));
     Data.commit((s) => {
       s.items[item.id] = item;
       if (placeIn) Query.layout(roomId, placeIn.mode).placements[item.id] = { x: placeIn.x, y: placeIn.y };

@@ -92,6 +92,8 @@ input.full { width: 100%; }
 /* ---------- toast ---------- */
 .toast { position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%); z-index: 60; background: var(--ink); color: var(--surface); padding: 8px 8px 8px 16px; border-radius: 999px;
   display: flex; gap: 10px; align-items: center; box-shadow: var(--shadow); max-width: calc(100% - 32px); font-size: 13px; }
+/* never cover a room's selection bar */
+body:has(.selbar) .toast { bottom: 132px; }
 .toast button { border: 0; background: var(--accent); color: var(--accent-ink); border-radius: 999px; padding: 4px 12px; cursor: pointer; font-weight: 500; }
 
 /* Motion is decoration: switched off for anyone who asks their system for less motion. */

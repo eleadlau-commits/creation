@@ -2,7 +2,7 @@
 // rooms screen can offer "Start empty".
 
 import { uid } from "../core/dom.js";
-import { emptyState } from "./migrations.js";
+import { emptyState, richDefaults } from "./migrations.js";
 
 export function sampleWorkspace() {
   const s = emptyState();
@@ -15,7 +15,7 @@ export function sampleWorkspace() {
     return r;
   };
   const item = (r, content, flavourId = null) => {
-    const i = { id: uid("item"), roomId: r.id, format: "text", flavourId, content, createdAt: start + (t += 60000) };
+    const i = { id: uid("item"), roomId: r.id, format: "text", flavourId, content, createdAt: start + (t += 60000), ...richDefaults({}) };
     s.items[i.id] = i;
     return i.id;
   };
