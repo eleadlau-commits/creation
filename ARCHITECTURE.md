@@ -13,7 +13,7 @@ Each layer only uses the layers above it in this list.
 | Layer | Folder | Job |
 |---|---|---|
 | Core | `js/core/` | Utilities, plug-in registries, squircle geometry |
-| Storage | `js/storage/` | Where data lives (browser storage + image files) |
+| Storage | `js/storage/` | Where data lives (IndexedDB: workspace, item history, image files) |
 | Data | `js/data/` | The workspace state, how it changes, how old data upgrades |
 | Settings | `js/settings/` | Declared settings and how values are inherited |
 | Plug-ins | `js/plugins/` | Modes, formats, motions, palettes |
@@ -39,13 +39,17 @@ js/
   core/dom.js              h(), svg(), drag(), afterPointer(), small helpers
   core/registry.js         Modes, Formats, Motions, Palettes registries
   core/squircle.js         squircle path from width, height, roundness
-  storage/storage.js       facade used by the rest of the app
-  storage/local.js         workspace adapter (localStorage)
-  storage/blobs.js         image adapter (IndexedDB)
+  storage/storage.js       facade used by the rest of the app (load is async)
+  storage/idb.js           shared IndexedDB helper: database "creation", stores workspace + history
+  storage/workspace-idb.js workspace adapter (IndexedDB); moves the old localStorage copy over once
+  storage/local.js         old workspace adapter (localStorage), kept as a fallback
+  storage/history-store.js item history adapter (IndexedDB), keyed by item id
+  storage/blobs.js         image adapter (IndexedDB, database "creation-files")
   data/store.js            Data: state, commit(), undo, subscribe
   data/actions.js          Query (read) and Act (change)
   data/migrations.js       data shape, version number, upgrade steps
   data/nesting.js          rooms inside rooms: helpers and the consistency check
+  data/history.js          item history: record (5-minute merge, max 50), list, restore
   data/presets.js          starting room types and flavours
   data/sample.js           first-run sample workspace
   settings/registry.js     Settings engine: define, resolve, inherit
@@ -63,6 +67,7 @@ js/
   ui/shelf.js              the shelf, composer, image upload
   ui/pill.js               how an item is drawn and edited; double-click opens details
   ui/details.js            item details panel: title, note, sources, origin (own root, #details-root)
+  ui/history-list.js       the History section of the details panel
   ui/drawer.js             settings drawer and its tabs
   ui/controls.js           setting controls generated from definitions
   ui/data-panel.js         backup download / import
@@ -99,6 +104,15 @@ disagrees. Settings are not inherited from the parent room.
 locator }]) and `origin` ({ at: "YYYY-MM-DD" | null, context }). A text item's title
 is its `content`; an image item has its own `title`. New items get these from
 `richDefaults()` in `migrations.js`. Deliberately no tags.
+
+**History** is stored apart from the workspace (`Storage.history`, IndexedDB) and is
+not part of the saved state shape, so it needs no migration step. `Act.updateItem`
+records a version after every finished edit of the title, note, sources or origin
+(`js/data/history.js`): edits within 5 minutes merge into the last version, the
+first version (how the item was before its first edit) is always kept, and an item
+keeps at most 50. Restoring (`Act.restoreVersion`) adds a new version. History is
+read only when a details panel opens, is included in backups, and history of
+deleted items is tidied away the next time Creation opens.
 All changes go through `Data.commit(fn, undoLabel?)`, usually via `Act.*`.
 
 **Changing the data shape:** bump `CURRENT` in `migrations.js` and add a step

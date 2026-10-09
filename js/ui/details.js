@@ -1,4 +1,4 @@
-// The item details panel: title, note, sources and origin of one text or image item.
+// The item details panel: title, note, sources, origin and history of one text or image item.
 // It lives in its own root (#details-root) so redrawing the room never takes the
 // focus away from a field being typed in. Changes are saved when a field is left.
 
@@ -6,6 +6,7 @@ import { h, uid } from "../core/dom.js";
 import { formatOf } from "../core/registry.js";
 import { Query, Act } from "../data/actions.js";
 import { UI } from "./state.js";
+import { historySection } from "./history-list.js";
 
 const root = () => document.getElementById("details-root");
 /** Always read the item fresh: the panel isn't redrawn while someone types in it. */
@@ -85,6 +86,7 @@ function panel(it) {
           onchange: (e) => save(it.id, { origin: { ...now(it.id).origin, at: e.target.value || null } }) })),
         field("Where or how", h("input", { type: "text", id: "d-origin-context", value: origin.context || "", placeholder: "e.g. on a walk",
           onchange: (e) => save(it.id, { origin: { ...now(it.id).origin, context: e.target.value.trim() } }) }))),
+      historySection(it.id, () => renderDetails(true)),
       h("p", { class: "help" }, "Added " + new Date(it.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" }))));
 }
 
