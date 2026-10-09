@@ -2,10 +2,11 @@
 // New items (text or images) always arrive here.
 
 import { h, drag, clamp } from "../core/dom.js";
-import { Act } from "../data/actions.js";
+import { Act, Query } from "../data/actions.js";
 import { Storage } from "../storage/storage.js";
 import { UI, Prefs } from "./state.js";
 import { makePill } from "./canvas.js";
+import { editItem } from "./pill.js";
 import { Toast } from "./feedback.js";
 
 export async function addImages(roomId, files) {
@@ -36,6 +37,13 @@ export function buildShelf(ctx, list, { full }) {
     const files = e.clipboardData?.files;
     if (files?.length && (await addImages(roomId, files))) e.preventDefault();
   });
+  const newRoom = () => {
+    const room = Act.addChildRoom(roomId);
+    const it = Query.roomItemOf(room.id);
+    UI.selection = { kind: "item", id: it.id };
+    UI.after(() => { const el = document.querySelector(`.pill[data-id="${it.id}"]`); if (el) editItem(el, it); });
+    UI.render();
+  };
   const file = h("input", { type: "file", accept: "image/*", multiple: true, hidden: true, id: "image-input",
     onchange: () => addImages(roomId, file.files) });
 
@@ -67,6 +75,7 @@ export function buildShelf(ctx, list, { full }) {
   el.append(head, itemsBox, h("div", { class: "composer" },
     input,
     h("button", { class: "btn", onclick: () => file.click(), title: "Add images" }, "Image"),
+    h("button", { class: "btn", id: "new-room-here", onclick: newRoom, title: "A new room inside this one" }, "Room"),
     h("button", { class: "btn primary", onclick: add }, "Add"),
     file));
 

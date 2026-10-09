@@ -11,6 +11,7 @@ import fuzzy from "./plugins/modes/fuzzy.js";
 
 import text from "./plugins/formats/text.js";
 import image from "./plugins/formats/image.js";
+import room from "./plugins/formats/room.js";
 
 import still from "./plugins/motions/none.js";
 import bob from "./plugins/motions/bob.js";
@@ -19,6 +20,6 @@ import drift from "./plugins/motions/drift.js";
 import palettes from "./plugins/palettes.js";
 
 [memo, graph, fuzzy].forEach((m) => Modes.register(m));
-[text, image].forEach((f) => Formats.register(f));
+[text, image, room].forEach((f) => Formats.register(f));
 [still, bob, drift].forEach((m) => Motions.register(m));
 palettes.forEach((p) => Palettes.register(p));

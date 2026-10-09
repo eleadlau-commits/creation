@@ -11,7 +11,7 @@ import { statusEl } from "./feedback.js";
 import { applyRoomTheme } from "./theme.js";
 import { buildCanvas } from "./canvas.js";
 import { buildShelf } from "./shelf.js";
-import { editItem } from "./pill.js";
+import { editItem, activate } from "./pill.js";
 
 /** The live context of the room on screen (rebuilt every render). */
 export let currentCtx = null;
@@ -60,14 +60,27 @@ function header(room, mode) {
     h("button", { class: "tab" + (m.id === mode.id ? " on" : ""), role: "tab", "aria-selected": String(m.id === mode.id), title: m.blurb,
       onclick: () => { UI.selection = null; Act.updateRoom(room.id, { mode: m.id }); } }, m.label)));
 
-  const confirm = h("span", { class: "confirm", hidden: true }, "Delete this room and everything in it?",
-    h("button", { class: "btn danger", onclick: () => { UI.go("rooms"); Act.deleteRoom(room.id); } }, "Delete"),
+  const parent = Query.room(room.parentId);
+  const up = () => (parent ? UI.go("room", parent.id) : UI.go("rooms"));
+  const inner = Query.items(room.id).filter((i) => i.format === "room").length;
+  const where = parent ? `“${parent.name}”` : "the rooms screen";
+  const question = inner
+    ? `Delete this room and its items? The ${inner === 1 ? "room" : inner + " rooms"} inside move${inner === 1 ? "s" : ""} to ${where}.`
+    : "Delete this room and everything in it?";
+  const confirm = h("span", { class: "confirm", hidden: true }, question,
+    h("button", { class: "btn danger", onclick: () => { up(); Act.deleteRoom(room.id); } }, "Delete"),
     h("button", { class: "btn ghost", onclick: () => { confirm.hidden = true; del.hidden = false; } }, "Cancel"));
   const del = h("button", { class: "btn ghost danger", onclick: () => { confirm.hidden = false; del.hidden = true; } }, "Delete room");
 
+  const crumbs = h("nav", { class: "crumbs", "aria-label": "Where you are" },
+    h("button", { class: "crumb", onclick: () => UI.go("rooms") }, "Creation"),
+    Query.path(room.id).slice(0, -1).map((r) => [h("span", { class: "sep", "aria-hidden": "true" }, "›"),
+      h("button", { class: "crumb", onclick: () => UI.go("room", r.id) }, r.name)]),
+    h("span", { class: "sep", "aria-hidden": "true" }, "›"));
+
   return h("div", { class: "bar" },
-    h("button", { class: "btn ghost", onclick: () => UI.go("rooms") }, "← Rooms"),
-    nameInput, h("span", { class: "spacer" }), tabs, toggle, statusEl(),
+    h("button", { class: "btn ghost", id: "back", onclick: up, title: parent ? `Back to “${parent.name}”` : "Back to the rooms screen", "aria-label": "Up one level" }, "←"),
+    crumbs, nameInput, h("span", { class: "spacer" }), tabs, toggle, statusEl(),
     h("button", { class: "btn", onclick: () => UI.openDrawer("room") }, "Style"),
     del, confirm);
 }
@@ -80,6 +93,19 @@ function selectionBar(ctx) {
     const it = Query.item(s.id);
     if (!it) return null;
     const placed = ctx.mode.spatial && ctx.layout.placements[it.id];
+    const toShelf = placed && h("button", { onclick: () => ctx.editLayout((l) => { delete l.placements[it.id]; }) }, "To shelf");
+    const pill = () => document.querySelector(`.pill[data-id="${it.id}"]`);
+    if (it.format === "room") {
+      const up = Query.room(ctx.room.parentId);
+      return h("div", { class: "selbar", onpointerdown: stop },
+        h("span", { class: "what" }, trunc(itemSummary(it), 40)),
+        h("button", { onclick: () => activate(pill(), it) }, "Open"),
+        h("button", { onclick: () => { const el = pill(); if (el) editItem(el, it); } }, "Rename"),
+        toShelf,
+        h("button", { title: up ? `Move into “${up.name}”` : "Move to the rooms screen",
+          onclick: () => { UI.selection = null; Act.moveRoomOut(it.content.roomId); } }, "Move out"),
+        h("button", { onclick: () => { UI.selection = null; Act.deleteRoom(it.content.roomId); } }, "Delete"));
+    }
     const flavour = h("select", { "aria-label": "Flavour", id: "flavour-select",
       onchange: (e) => Act.updateItem(it.id, { flavourId: e.target.value || null }) },
       h("option", { value: "" }, "No flavour"),
@@ -87,8 +113,8 @@ function selectionBar(ctx) {
     return h("div", { class: "selbar", onpointerdown: stop },
       h("span", { class: "what" }, trunc(itemSummary(it), 40)),
       flavour,
-      formatOf(it).editable && h("button", { onclick: () => { const el = document.querySelector(`.pill[data-id="${it.id}"]`); if (el) editItem(el, it); } }, "Edit"),
-      placed && h("button", { onclick: () => ctx.editLayout((l) => { delete l.placements[it.id]; }) }, "To shelf"),
+      formatOf(it).editable && h("button", { onclick: () => { const el = pill(); if (el) editItem(el, it); } }, "Edit"),
+      toShelf,
       h("button", { onclick: () => { UI.selection = null; Act.deleteItem(it.id); } }, "Delete everywhere"));
   }
   return h("div", { class: "selbar", onpointerdown: stop },

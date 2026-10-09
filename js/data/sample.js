@@ -10,7 +10,7 @@ export function sampleWorkspace() {
   const start = Date.now() - 86400000 * 3;
   let t = 0;
   const room = (name, x, y, w, h, hue, extra = {}) => {
-    const r = { id: uid("room"), name, x, y, w, h, hue, typeId: null, settings: {}, modeSwitching: false, mode: "memo", createdAt: start + (t += 1000), ...extra };
+    const r = { id: uid("room"), name, x, y, w, h, hue, typeId: null, settings: {}, modeSwitching: false, mode: "memo", parentId: null, createdAt: start + (t += 1000), ...extra };
     s.rooms[r.id] = r;
     return r;
   };

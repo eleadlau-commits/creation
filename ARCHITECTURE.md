@@ -31,7 +31,7 @@ css/
   home.css                 the home page
   rooms.css                the rooms screen
   room.css                 inside a room: pills, shelf, selection bar
-  plugins/<name>.css       styles that belong to one plug-in
+  plugins/<name>.css       styles that belong to one plug-in (graph, fuzzy, room-chip)
 js/
   main.js                  boot: register plug-ins, load data, start UI
   plugins.js               THE MANIFEST: import + register every plug-in
@@ -44,12 +44,13 @@ js/
   data/store.js            Data: state, commit(), undo, subscribe
   data/actions.js          Query (read) and Act (change)
   data/migrations.js       data shape, version number, upgrade steps
+  data/nesting.js          rooms inside rooms: helpers and the consistency check
   data/presets.js          starting room types and flavours
   data/sample.js           first-run sample workspace
   settings/registry.js     Settings engine: define, resolve, inherit
   settings/definitions.js  EVERY SETTING, declared once
   plugins/modes/*.js       memo, graph, fuzzy
-  plugins/formats/*.js     text, image
+  plugins/formats/*.js     text, image, room (a room inside a room)
   plugins/motions/*.js     still, bob, drift
   plugins/palettes.js      named colour palettes
   ui/app.js                render loop, keyboard
@@ -69,10 +70,11 @@ js/
 
 ## Words
 
-- **Room**: a squircle on the first screen. Holds items.
+- **Room**: holds items. A top-level room is a squircle on the rooms screen; a room
+  inside another room is an item there (a room chip). Each room is in exactly one place.
 - **Room type**: a named preset of room settings (e.g. Project, Floating).
 - **Item**: one thing inside a room, drawn as a pill.
-- **Format**: what an item's content is: `text`, `image`.
+- **Format**: what an item's content is: `text`, `image`, `room`.
 - **Flavour**: a named preset of item settings: a kind of idea (Hunch, Question).
 - **Mode**: a way of arranging a room's items (memo, graph, fuzzy).
 - **Layout**: one room's arrangement in one mode. Never shared between modes.
@@ -81,6 +83,14 @@ js/
 ## Data
 
 The full shape is documented at the top of `js/data/migrations.js`.
+
+**Rooms inside rooms.** A room inside another room is an item there with format
+`room` and `content: { roomId }`. That item is the source of truth; `room.parentId`
+mirrors it (null at the top level). Only these change nesting, and they keep both
+in step: `Act.addChildRoom`, `Act.groupRooms`, `Act.moveRoomOut`, `Act.deleteRoom`
+(ordinary items are deleted, rooms inside move up a level). `checkNesting()` in
+`js/data/nesting.js` runs on every load and import and repairs anything that
+disagrees. Settings are not inherited from the parent room.
 All changes go through `Data.commit(fn, undoLabel?)`, usually via `Act.*`.
 
 **Changing the data shape:** bump `CURRENT` in `migrations.js` and add a step
@@ -142,7 +152,14 @@ in `index.html` if it has CSS.
 ### Format (`js/plugins/formats/`)
 
 ```js
-{ id, label, editable, render(item) -> Node, summary(item) -> string }
+{
+  id, label, editable,
+  render(item) -> Node | Node[],
+  summary(item) -> string,
+  look(item),          // optional: { class, style }; replaces item settings and flavours
+  open(item, go),      // optional: what double-click / Enter does instead of editing; go(screen, id)
+  rename(item),        // optional: { value, room } to edit a name in place instead of the content
+}
 ```
 
 ### Motion (`js/plugins/motions/`)

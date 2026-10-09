@@ -4,6 +4,11 @@
 .room-name-input:hover { border-color: var(--line) !important; }
 .room-name-input:focus { border-color: var(--accent) !important; outline: none; background: var(--ground) !important; }
 
+.crumbs { display: flex; align-items: center; gap: 2px; min-width: 0; flex-wrap: wrap; font-size: 13px; color: var(--ink-2); }
+.crumb { border: 0; background: none; padding: 3px 6px; border-radius: 6px; cursor: pointer; color: var(--ink-2); max-width: 16ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crumb:hover { color: var(--ink); background: var(--ground); }
+.crumbs .sep { opacity: .7; }
+
 .roombody { flex: 1; min-height: 0; display: flex; flex-direction: column; position: relative; }
 .modebar { position: absolute; left: 12px; top: 12px; right: 12px; display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; pointer-events: none; z-index: 3; }
 .modebar > * { pointer-events: auto; }
