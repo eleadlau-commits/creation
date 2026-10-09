@@ -7,6 +7,7 @@ import { Storage } from "../storage/storage.js";
 import { UI } from "./state.js";
 import { Toast, refreshStatus } from "./feedback.js";
 import { applyAppTheme } from "./theme.js";
+import { buildHomeScreen } from "./home-screen.js";
 import { buildRoomsScreen } from "./rooms-screen.js";
 import { buildRoomView, roomKeydown } from "./room-view.js";
 import { renderDrawer } from "./drawer.js";
@@ -16,7 +17,8 @@ function renderMain() {
   if (UI.editingItem) return; // never rebuild under an open editor
   if (UI.screen === "room" && !Query.room(UI.roomId)) UI.screen = "rooms";
   applyAppTheme(Settings.forApp(Data.state));
-  const view = UI.screen === "room" ? buildRoomView(Query.room(UI.roomId)) : buildRoomsScreen();
+  const view = UI.screen === "home" ? buildHomeScreen()
+    : UI.screen === "room" ? buildRoomView(Query.room(UI.roomId)) : buildRoomsScreen();
   document.getElementById("app").replaceChildren(view);
   UI.flushAfter();
 }

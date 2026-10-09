@@ -100,6 +100,8 @@ Sign-in and sign-out behaviour (agreed):
 - Sign-out: offer "Keep a copy on this device" or "Remove from this device" (for shared computers).
 
 Interface:
+- Home page: add a "Log in" button next to "Create now", shown only when not signed in.
+  (The home page itself was added before Phase 1 and shows every time Creation opens.)
 - A new "Account" tab in the Settings drawer: sign in or out, who is signed in, and sync status.
 - The save indicator says "Synced to your account" or "Saved in this browser" as appropriate.
 

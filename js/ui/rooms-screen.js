@@ -126,7 +126,7 @@ export function buildRoomsScreen() {
     h("button", { class: "btn primary", onclick: () => Data.commit((st) => Object.assign(st, emptyState()), "Cleared the sample workspace") }, "Start empty")));
 
   const bar = h("div", { class: "bar" },
-    h("div", { class: "brand" }, "Creation"),
+    h("button", { class: "brand brand-link", title: "Home", onclick: () => UI.go("home") }, "Creation"),
     h("span", { class: "spacer" }),
     statusEl(),
     h("button", { class: "btn ghost", onclick: () => UI.openDrawer(UI.drawer.tab === "room" ? "everywhere" : UI.drawer.tab) }, "Settings"),
