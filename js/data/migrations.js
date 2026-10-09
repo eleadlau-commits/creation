@@ -4,22 +4,27 @@
 // turns version N into N+1. Never edit an old step. This keeps every saved
 // workspace and every backup file loadable forever.
 //
-// State (version 2):
+// State (version 3):
 // {
-//   version: 2,
+//   version: 3,
 //   settings:  { app: {}, room: {}, item: {} },      global setting values
 //   roomTypes: { id: { id, name, settings, createdAt } },
 //   flavours:  { id: { id, name, settings, createdAt } },
-//   rooms:     { id: { id, name, x, y, w, h, hue, typeId, settings, modeSwitching, mode, createdAt } },
+//   rooms:     { id: { id, name, x, y, w, h, hue, typeId, settings, modeSwitching, mode, parentId, createdAt } },
+//              parentId: the room it sits inside, or null at the top level (x, y, w, h are
+//              its place on the rooms screen, kept while nested). Mirrors the room-item below.
 //   items:     { id: { id, roomId, format, flavourId, content, createdAt } },
+//              roomId: the room the item is in. A room inside a room is an item with
+//              format "room" and content { roomId } (see data/nesting.js).
 //   layouts:   { "roomId:modeId": { placements: { itemId: {x, y} }, pan: {x, y}, ...mode data } },
 //   roomsPan:  { x, y },
 //   sample:    boolean
 // }
 
 import { defaultRoomTypes, defaultFlavours } from "./presets.js";
+import { checkNesting } from "./nesting.js";
 
-export const CURRENT = 2;
+export const CURRENT = 3;
 
 const steps = {
   // 1 -> 2: the "Idea Rooms" draft. Items had `type`, now `format`; settings, room types and flavours added.
@@ -36,6 +41,11 @@ const steps = {
     s.settings = { app: {}, room: {}, item: {} };
     s.roomTypes = Object.fromEntries(defaultRoomTypes().map((t) => [t.id, t]));
     s.flavours = Object.fromEntries(defaultFlavours().map((f) => [f.id, f]));
+    return s;
+  },
+  // 2 -> 3: rooms can sit inside rooms. Every existing room is at the top level.
+  2(s) {
+    for (const r of Object.values(s.rooms || {})) r.parentId = null;
     return s;
   },
 };
@@ -75,5 +85,6 @@ function normalise(s) {
   s.sample = !!s.sample;
   for (const r of Object.values(s.rooms)) { r.settings = r.settings || {}; r.typeId = r.typeId ?? null; }
   for (const it of Object.values(s.items)) { it.format = it.format || "text"; it.flavourId = it.flavourId ?? null; }
+  checkNesting(s);
   return s;
 }

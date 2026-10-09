@@ -5,7 +5,7 @@
 import { h, drag } from "../core/dom.js";
 import { Data } from "../data/store.js";
 import { UI } from "./state.js";
-import { pillEl, editItem } from "./pill.js";
+import { pillEl, activate } from "./pill.js";
 
 export function makePill(ctx, item) {
   const selected = ctx.selection?.kind === "item" && ctx.selection.id === item.id;
@@ -149,7 +149,7 @@ export function startItemDrag(e, el, item, ctx) {
       el.classList.remove("lifted");
       shelf?.classList.remove("drop-target");
       if (!moved) {
-        if (ctx.selection?.kind === "item" && ctx.selection.id === item.id) editItem(el, item);
+        if (ctx.selection?.kind === "item" && ctx.selection.id === item.id) activate(el, item);
         else ctx.select({ kind: "item", id: item.id });
         return;
       }

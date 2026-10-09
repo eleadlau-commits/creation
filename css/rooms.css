@@ -14,6 +14,11 @@
 .room .resize::before { content: ""; position: absolute; right: 5px; bottom: 5px; width: 9px; height: 9px; border-right: 2px solid var(--ink-2); border-bottom: 2px solid var(--ink-2); border-bottom-right-radius: 4px; }
 @media (hover: none) { .room .resize { opacity: .8; } }
 
+/* choosing rooms to group */
+.plane.picking .room { cursor: default; }
+.room.picked svg.shape path { stroke: var(--accent); stroke-width: 3px; stroke-dasharray: none; }
+.picked-count { font-size: 13px; color: var(--ink-2); }
+
 .banner { position: absolute; left: 16px; bottom: 16px; right: 16px; max-width: 540px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; box-shadow: var(--shadow);
   display: flex; gap: 10px; align-items: center; flex-wrap: wrap; z-index: 4; cursor: default; }
 .banner p { margin: 0; flex: 1 1 220px; color: var(--ink-2); line-height: 1.45; }

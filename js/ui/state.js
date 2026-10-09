@@ -20,6 +20,7 @@ export const UI = {
   editingItem: null, // while an item is being edited, re-rendering is paused
   focusComposer: false,
   renameRoomId: null,
+  picking: null, // rooms screen: a Set of room ids while choosing rooms to group
   _after: [],
 
   // Filled in by ui/app.js
@@ -35,6 +36,7 @@ export const UI = {
     this.screen = screen;
     this.roomId = roomId;
     this.selection = null;
+    this.picking = null;
     if (screen === "rooms" && this.drawer.tab === "room") this.drawer.tab = "everywhere";
     this.render();
     this.renderDrawer();

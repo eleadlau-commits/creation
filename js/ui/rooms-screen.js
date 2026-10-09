@@ -42,6 +42,19 @@ function rename(room, nameEl) {
   nameEl.onblur = () => finish(true);
 }
 
+/** Choosing rooms to group: shift-click, or the Select button. */
+function togglePick(id) {
+  UI.picking = UI.picking || new Set();
+  if (UI.picking.has(id)) UI.picking.delete(id); else UI.picking.add(id);
+  UI.render();
+}
+function group() {
+  const room = Act.groupRooms([...UI.picking]);
+  UI.picking = null;
+  if (room) UI.renameRoomId = room.id;
+  UI.render();
+}
+
 function roomEl(room) {
   const v = Settings.forRoom(Data.state, room);
   const count = Query.items(room.id).length;
@@ -53,7 +66,8 @@ function roomEl(room) {
   const meta = h("div", { class: "rmeta", text: [type?.name, `${count} ${count === 1 ? "item" : "items"}`].filter(Boolean).join(" · ") });
   const body = h("div", { class: "room-body" }, shape, h("div", { class: "inner" }, name, meta));
   const grip = h("div", { class: "resize", title: "Drag to resize" });
-  const el = h("div", { class: "room", "data-id": room.id, tabindex: "0", "aria-label": "Open room " + room.name,
+  const picked = !!UI.picking?.has(room.id);
+  const el = h("div", { class: "room" + (picked ? " picked" : ""), "data-id": room.id, "aria-pressed": UI.picking ? String(picked) : null, tabindex: "0", "aria-label": "Open room " + room.name,
     style: { "--h": v.hue ?? room.hue } }, body, grip);
   applyMotion(body, v.motion, v.motionStrength, hashSeed(room.id));
 
@@ -67,7 +81,7 @@ function roomEl(room) {
   };
   size(room.w, room.h);
 
-  el.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target === el) UI.go("room", room.id); });
+  el.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target === el) (UI.picking ? togglePick(room.id) : UI.go("room", room.id)); });
   el.addEventListener("pointerdown", (e) => {
     if (name.isContentEditable) return;
     e.stopPropagation();
@@ -83,7 +97,7 @@ function roomEl(room) {
     drag(e, {
       move: (dx, dy) => { el.style.left = sx + dx + "px"; el.style.top = sy + dy + "px"; },
       end: (ev, moved) => {
-        if (!moved) { UI.go("room", room.id); return; }
+        if (!moved) { if (ev.shiftKey || UI.picking) togglePick(room.id); else UI.go("room", room.id); return; }
         Act.updateRoom(room.id, { x: Math.round(sx + ev.clientX - e.clientX), y: Math.round(sy + ev.clientY - e.clientY) });
       },
     });
@@ -99,7 +113,7 @@ export function buildRoomsScreen() {
   const setPan = () => { world.style.transform = `translate(${s.roomsPan.x}px, ${s.roomsPan.y}px)`; };
   setPan();
 
-  const rooms = Query.rooms();
+  const rooms = Query.topRooms();
   for (const room of rooms) world.append(roomEl(room));
   if (!rooms.length) plane.append(h("div", { class: "empty-note" }, h("b", {}, "No rooms yet"), "Double-click anywhere, or use New room, to make your first one."));
 
@@ -129,8 +143,17 @@ export function buildRoomsScreen() {
     h("button", { class: "brand brand-link", title: "Home", onclick: () => UI.go("home") }, "Creation"),
     h("span", { class: "spacer" }),
     statusEl(),
-    h("button", { class: "btn ghost", onclick: () => UI.openDrawer(UI.drawer.tab === "room" ? "everywhere" : UI.drawer.tab) }, "Settings"),
-    h("button", { class: "btn primary", onclick: () => { const r = plane.getBoundingClientRect(); create(r.width / 2 - s.roomsPan.x - 110, r.height / 2 - s.roomsPan.y - 85); } }, "New room"));
+    UI.picking ? [
+      h("span", { class: "picked-count" }, UI.picking.size ? `${UI.picking.size} selected` : "Click rooms to select them"),
+      h("button", { class: "btn primary", id: "group-rooms", disabled: !UI.picking.size, onclick: group }, "Group into new room"),
+      h("button", { class: "btn ghost", onclick: () => { UI.picking = null; UI.render(); } }, "Cancel"),
+    ] : [
+      h("button", { class: "btn ghost", onclick: () => UI.openDrawer(UI.drawer.tab === "room" ? "everywhere" : UI.drawer.tab) }, "Settings"),
+      rooms.length > 0 && h("button", { class: "btn", id: "select-rooms", title: "Select rooms to group them (or shift-click rooms)",
+        onclick: () => { UI.picking = new Set(); UI.render(); } }, "Select"),
+      h("button", { class: "btn primary", onclick: () => { const r = plane.getBoundingClientRect(); create(r.width / 2 - s.roomsPan.x - 110, r.height / 2 - s.roomsPan.y - 85); } }, "New room"),
+    ]);
 
+  if (UI.picking) plane.classList.add("picking");
   return h("div", { class: "screen" }, bar, plane);
 }

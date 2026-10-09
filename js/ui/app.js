@@ -36,6 +36,7 @@ export function startUI() {
   document.addEventListener("keydown", (e) => {
     if (isTyping()) return;
     if (e.key === "Escape" && UI.drawer.open && !UI.selection) { UI.drawer.open = false; renderDrawer(); return; }
+    if (e.key === "Escape" && UI.picking) { UI.picking = null; UI.render(); return; }
     roomKeydown(e);
   });
   UI.render();
