@@ -12,7 +12,8 @@ const KEY = (uid) => "creation.syncFiles." + uid; // ids of files known to be in
 const save = (uid, set) => { try { set ? localStorage.setItem(KEY(uid), JSON.stringify([...set])) : localStorage.removeItem(KEY(uid)); } catch { /* full or private */ } };
 const blobIds = (state) => new Set(Object.values(state.items).filter((i) => i.format === "image" && i.content?.blob).map((i) => i.content.blob));
 
-let uid = null, ready = false, uploaded = new Set();
+const RETRY_MS = 20000, RETRIES = 30; // a missing picture may still be on its way: look again for ~10 minutes
+let uid = null, ready = false, uploaded = new Set(), retryTimer = null, retries = 0;
 const shown = new Map(); // files shown from the account where downloading isn't allowed (CORS not set up)
 
 export const SyncFiles = {
@@ -36,11 +37,21 @@ export const SyncFiles = {
     } catch (e) { console.warn("Couldn't upload an image:", e); return false; }
   },
 
-  /** Download the pictures of image items that arrived from other devices. */
-  async fetchMissing() {
+  /** Upload every picture in this browser that the account may not have yet
+   *  (for example images whose items were synced before pictures were). */
+  async uploadMissing() {
     if (!ready) return;
     const here = new Set(await Storage.blobs.keys());
-    let got = false;
+    for (const id of blobIds(Data.state)) if (here.has(id) && !uploaded.has(id)) await this.ensure(id);
+  },
+
+  /** Download the pictures of image items that arrived from other devices. */
+  async fetchMissing({ retry = false } = {}) {
+    if (!ready) return;
+    if (!retry) retries = 0;
+    clearTimeout(retryTimer);
+    const here = new Set(await Storage.blobs.keys());
+    let got = false, missing = 0;
     for (const id of blobIds(Data.state)) {
       if (here.has(id) || shown.has(id)) continue;
       try {
@@ -50,9 +61,11 @@ export const SyncFiles = {
         const url = await CloudFiles.url(id); // the bucket doesn't allow downloads from this site: show it online only
         if (url) { shown.set(id, url); got = true; }
       }
+      if (!(await Storage.blobs.get(id)) && !shown.has(id)) missing++;
     }
     save(uid, uploaded);
     if (got) Data.emit();
+    if (missing && ready && retries++ < RETRIES) retryTimer = setTimeout(() => this.fetchMissing({ retry: true }), RETRY_MS);
   },
 
   /** Remove files from the account that no item uses, once they are more than a day old. */
@@ -70,7 +83,7 @@ export const SyncFiles = {
   },
 
   /** Signed out: forget what this browser knew about the account's files. */
-  reset() { if (uid) save(uid, null); uid = null; ready = false; uploaded = new Set(); shown.clear(); },
+  reset() { clearTimeout(retryTimer); if (uid) save(uid, null); uid = null; ready = false; uploaded = new Set(); shown.clear(); },
 };
 
 Storage.blobs.remoteUrl = (id) => shown.get(id) || null;
