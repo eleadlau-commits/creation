@@ -1,0 +1,25 @@
+/* The item details panel (title, note, sources, origin) and the pill's "has more" mark. */
+
+.details { position: fixed; top: 0; right: 0; bottom: 0; width: 380px; max-width: 100%; z-index: 40; background: var(--surface); color: var(--ink);
+  border-left: 1px solid var(--line); box-shadow: var(--shadow); display: flex; flex-direction: column; }
+.details input[type="text"], .details input[type="date"], .details textarea { width: 100%; border: 1px solid var(--line); background: var(--ground); color: var(--ink);
+  border-radius: 8px; padding: 7px 9px; font: inherit; }
+.details input:focus, .details textarea:focus { outline: none; border-color: var(--accent); background: var(--surface); }
+.details textarea { resize: vertical; min-height: 120px; line-height: 1.5; }
+#d-title { font-family: var(--font-display); font-weight: 650; font-size: 17px; }
+.d-field { display: flex; flex-direction: column; gap: 5px; }
+.d-label { font-size: 12.5px; color: var(--ink-2); }
+.d-sources { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.d-source { display: flex; flex-direction: column; gap: 5px; padding: 8px; border: 1px solid var(--line); border-radius: 10px; }
+.d-src-row { display: flex; gap: 5px; align-items: center; }
+.d-src-row .d-src-url { flex: 2; min-width: 0; }
+.d-src-row .d-src-loc { flex: 1; min-width: 0; }
+.d-src-row .btn { padding: 4px 9px; text-decoration: none; color: var(--ink); }
+
+/* a small dot on pills that have a note or sources */
+.pill .more { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-2); flex: none; opacity: .75; }
+.pill.image .more { position: absolute; right: 9px; top: 9px; background: var(--surface); box-shadow: 0 0 0 2px var(--ink-2); }
+
+@media (max-width: 560px) {
+  .details { top: auto; height: 78%; width: 100%; border-left: 0; border-top: 1px solid var(--line); border-radius: 16px 16px 0 0; }
+}

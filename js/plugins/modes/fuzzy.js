@@ -1,6 +1,6 @@
 // Fuzzy mode: overlapping fields; an item belongs to each by degree (0 to 1).
 // Layout data: { placements, pan, fields: [{ id, name, x, y, r, hue }] }
-import { h, drag, uid, clamp, trunc, placeCaretEnd } from "../../core/dom.js";
+import { h, drag, uid, clamp, trunc, placeCaretEnd, afterPointer } from "../../core/dom.js";
 
 const FIELD_HUES = [212, 150, 330, 38, 268, 8, 180];
 let pendingRename = null; // field id to rename after the next render
@@ -56,7 +56,7 @@ function rename(ctx, id) {
     if (ev.key === "Enter") { ev.preventDefault(); finish(true); }
     if (ev.key === "Escape") finish(false);
   };
-  label.onblur = () => finish(true);
+  label.onblur = () => afterPointer(() => finish(true));
 }
 function meterRow(name, m, hue) {
   return h("div", { class: "row" }, h("span", {}, name),

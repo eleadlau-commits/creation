@@ -2,12 +2,13 @@
 // Its look comes from item settings (global -> flavour), unless its format brings
 // its own look (rooms inside rooms); its content comes from the item's format.
 
-import { h, hashSeed, placeCaretEnd, isTyping } from "../core/dom.js";
+import { h, hashSeed, placeCaretEnd, isTyping, afterPointer } from "../core/dom.js";
 import { formatOf, applyMotion } from "../core/registry.js";
 import { Settings } from "../settings/registry.js";
 import { Data } from "../data/store.js";
 import { Act } from "../data/actions.js";
 import { UI } from "./state.js";
+import { openDetails } from "./details.js";
 
 /** opts: { selected, onSelect, onDragStart(e, el, item) } */
 export function pillEl(item, { selected, onSelect, onDragStart }) {
@@ -25,11 +26,11 @@ export function pillEl(item, { selected, onSelect, onDragStart }) {
     },
   },
   v?.mark ? h("span", { class: "mark", text: v.mark }) : null,
-  fmt.render(item));
+  fmt.render(item),
+  !own && (item.note?.trim() || item.sources?.length) ? h("span", { class: "more", title: "Has a note or sources", "aria-label": "Has a note or sources" }) : null);
   if (v) applyMotion(el, v.itemMotion, v.itemMotionStrength, hashSeed(item.id));
 
   el.addEventListener("pointerdown", (e) => onDragStart(e, el, item));
-  el.addEventListener("dblclick", (e) => { e.stopPropagation(); activate(el, item); });
   el.addEventListener("keydown", (e) => {
     if (isTyping()) return;
     if (e.key === "Enter") { e.preventDefault(); if (selected) activate(el, item); else onSelect(); }
@@ -37,7 +38,14 @@ export function pillEl(item, { selected, onSelect, onDragStart }) {
   return el;
 }
 
-/** What a second click, double-click or Enter does: open it (rooms) or edit its text. */
+/** Double-click: go inside a room, or open an item's details. */
+export function openItem(item) {
+  const fmt = formatOf(item);
+  if (fmt.open) fmt.open(item, (screen, id) => UI.go(screen, id));
+  else openDetails(item.id);
+}
+
+/** Enter on a selected pill (and Open): go inside a room, or edit the text in place. */
 export function activate(el, item) {
   const fmt = formatOf(item);
   if (fmt.open) fmt.open(item, (screen, id) => UI.go(screen, id));
@@ -56,7 +64,10 @@ export function editItem(el, item) {
   t.contentEditable = "true";
   t.focus();
   placeCaretEnd(t);
+  let done = false;
   const finish = (save) => {
+    if (done) return;
+    done = true;
     t.onblur = null;
     t.contentEditable = "false";
     UI.editingItem = null;
@@ -71,5 +82,5 @@ export function editItem(el, item) {
     if (ev.key === "Enter") { ev.preventDefault(); finish(true); }
     if (ev.key === "Escape") finish(false);
   };
-  t.onblur = () => finish(true);
+  t.onblur = () => afterPointer(() => finish(true));
 }

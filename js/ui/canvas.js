@@ -5,7 +5,10 @@
 import { h, drag } from "../core/dom.js";
 import { Data } from "../data/store.js";
 import { UI } from "./state.js";
-import { pillEl, activate } from "./pill.js";
+import { pillEl, openItem } from "./pill.js";
+import { formatOf } from "../core/registry.js";
+
+let lastClick = { id: null, at: 0 };
 
 export function makePill(ctx, item) {
   const selected = ctx.selection?.kind === "item" && ctx.selection.id === item.id;
@@ -149,8 +152,12 @@ export function startItemDrag(e, el, item, ctx) {
       el.classList.remove("lifted");
       shelf?.classList.remove("drop-target");
       if (!moved) {
-        if (ctx.selection?.kind === "item" && ctx.selection.id === item.id) activate(el, item);
-        else ctx.select({ kind: "item", id: item.id });
+        // A double-click is two clicks; the first one selects (and redraws the pill).
+        const selected = ctx.selection?.kind === "item" && ctx.selection.id === item.id;
+        const quick = selected && lastClick.id === item.id && Date.now() - lastClick.at < 450;
+        lastClick = { id: item.id, at: quick ? 0 : Date.now() };
+        if (quick || (selected && formatOf(item).open)) openItem(item);
+        else if (!selected) ctx.select({ kind: "item", id: item.id });
         return;
       }
       if (!spatial) return;

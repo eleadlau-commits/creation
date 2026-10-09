@@ -84,6 +84,17 @@ export function placeCaretEnd(el) {
   s.addRange(r);
 }
 
+let pointerIsDown = false;
+addEventListener("pointerdown", () => { pointerIsDown = true; }, true);
+addEventListener("pointerup", () => { pointerIsDown = false; }, true);
+addEventListener("pointercancel", () => { pointerIsDown = false; }, true);
+/** Run fn once any click in progress has finished, so finishing an edit on blur
+ *  doesn't redraw the screen under the button that was just pressed. */
+export function afterPointer(fn) {
+  if (!pointerIsDown) { fn(); return; }
+  addEventListener("pointerup", () => setTimeout(fn, 0), { once: true });
+}
+
 export const isTyping = () => {
   const a = document.activeElement;
   return !!a && (a.isContentEditable || /INPUT|TEXTAREA|SELECT/.test(a.tagName));

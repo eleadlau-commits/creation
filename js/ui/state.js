@@ -20,12 +20,14 @@ export const UI = {
   editingItem: null, // while an item is being edited, re-rendering is paused
   focusComposer: false,
   renameRoomId: null,
+  details: null, // id of the item whose details panel is open
   picking: null, // rooms screen: a Set of room ids while choosing rooms to group
   _after: [],
 
   // Filled in by ui/app.js
   renderMain: () => {},
   renderDrawer: () => {},
+  renderDetails: () => {},
 
   render() { this.renderMain(); },
   /** Run fn once, right after the next render has put the new DOM in place. */
@@ -37,12 +39,15 @@ export const UI = {
     this.roomId = roomId;
     this.selection = null;
     this.picking = null;
+    this.details = null;
     if (screen === "rooms" && this.drawer.tab === "room") this.drawer.tab = "everywhere";
     this.render();
     this.renderDrawer();
+    this.renderDetails();
   },
   openDrawer(tab) {
     this.drawer.open = true;
+    if (this.details) { this.details = null; this.renderDetails(); }
     if (tab) this.drawer.tab = tab;
     this.renderDrawer();
   },

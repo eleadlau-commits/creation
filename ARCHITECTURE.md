@@ -31,11 +31,12 @@ css/
   home.css                 the home page
   rooms.css                the rooms screen
   room.css                 inside a room: pills, shelf, selection bar
+  details.css              the item details panel and the pill's "has more" dot
   plugins/<name>.css       styles that belong to one plug-in (graph, fuzzy, room-chip)
 js/
   main.js                  boot: register plug-ins, load data, start UI
   plugins.js               THE MANIFEST: import + register every plug-in
-  core/dom.js              h(), svg(), drag(), small helpers
+  core/dom.js              h(), svg(), drag(), afterPointer(), small helpers
   core/registry.js         Modes, Formats, Motions, Palettes registries
   core/squircle.js         squircle path from width, height, roundness
   storage/storage.js       facade used by the rest of the app
@@ -60,7 +61,8 @@ js/
   ui/room-view.js          inside a room; builds the mode `ctx`
   ui/canvas.js             spatial canvas shared by spatial modes
   ui/shelf.js              the shelf, composer, image upload
-  ui/pill.js               how an item is drawn and edited
+  ui/pill.js               how an item is drawn and edited; double-click opens details
+  ui/details.js            item details panel: title, note, sources, origin (own root, #details-root)
   ui/drawer.js             settings drawer and its tabs
   ui/controls.js           setting controls generated from definitions
   ui/data-panel.js         backup download / import
@@ -73,7 +75,8 @@ js/
 - **Room**: holds items. A top-level room is a squircle on the rooms screen; a room
   inside another room is an item there (a room chip). Each room is in exactly one place.
 - **Room type**: a named preset of room settings (e.g. Project, Floating).
-- **Item**: one thing inside a room, drawn as a pill.
+- **Item**: one thing inside a room, drawn as a pill. Text and image items also have a
+  note, sources and an origin, edited in the details panel (double-click, or Details).
 - **Format**: what an item's content is: `text`, `image`, `room`.
 - **Flavour**: a named preset of item settings: a kind of idea (Hunch, Question).
 - **Mode**: a way of arranging a room's items (memo, graph, fuzzy).
@@ -91,6 +94,11 @@ in step: `Act.addChildRoom`, `Act.groupRooms`, `Act.moveRoomOut`, `Act.deleteRoo
 (ordinary items are deleted, rooms inside move up a level). `checkNesting()` in
 `js/data/nesting.js` runs on every load and import and repairs anything that
 disagrees. Settings are not inherited from the parent room.
+
+**Rich items.** Text and image items carry `note`, `sources` ([{ id, label, url,
+locator }]) and `origin` ({ at: "YYYY-MM-DD" | null, context }). A text item's title
+is its `content`; an image item has its own `title`. New items get these from
+`richDefaults()` in `migrations.js`. Deliberately no tags.
 All changes go through `Data.commit(fn, undoLabel?)`, usually via `Act.*`.
 
 **Changing the data shape:** bump `CURRENT` in `migrations.js` and add a step
