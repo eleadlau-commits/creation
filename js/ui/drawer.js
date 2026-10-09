@@ -4,6 +4,7 @@
 //   Room types  presets of room settings
 //   Flavours    presets of item settings
 //   Data        backups
+//   Account     sign in and out
 // It renders separately from the main view so sliders keep working while the app redraws.
 
 import { h } from "../core/dom.js";
@@ -12,6 +13,7 @@ import { Query, Act } from "../data/actions.js";
 import { UI } from "./state.js";
 import { settingsControls } from "./controls.js";
 import { dataPanel } from "./data-panel.js";
+import { accountPanel } from "./account-panel.js";
 
 const section = (title, ...kids) => h("section", { class: "dsec" }, h("h4", {}, title), ...kids);
 
@@ -91,6 +93,7 @@ const TABS = [
   ["types", "Room types", typesTab],
   ["flavours", "Flavours", flavoursTab],
   ["data", "Data", dataPanel],
+  ["account", "Account", accountPanel],
 ];
 
 export function renderDrawer() {

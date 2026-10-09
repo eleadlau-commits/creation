@@ -25,6 +25,9 @@ Each layer only uses the layers above it in this list.
 
 ```
 index.html                 page shell; links every CSS file and js/main.js
+firestore.rules            database security rules (paste into the Firebase console)
+storage.rules              image storage security rules (paste into the Firebase console)
+docs/firebase-setup.md     step-by-step Firebase setup for the owner
 css/
   theme.css                colour and font tokens (light + dark)
   base.css                 frame, bars, buttons, settings drawer, toast
@@ -45,11 +48,14 @@ js/
   storage/local.js         old workspace adapter (localStorage), kept as a fallback
   storage/history-store.js item history adapter (IndexedDB), keyed by item id
   storage/blobs.js         image adapter (IndexedDB, database "creation-files")
+  storage/firebase-config.js  Firebase web config (public by design) and the pinned SDK version
+  storage/account.js       sign in/out (Firebase Auth from the CDN, loaded only when needed)
   data/store.js            Data: state, commit(), undo, subscribe
   data/actions.js          Query (read) and Act (change)
   data/migrations.js       data shape, version number, upgrade steps
   data/nesting.js          rooms inside rooms: helpers and the consistency check
   data/history.js          item history: record (5-minute merge, max 50), list, restore
+  data/stamps.js           stamps updatedAt on changed rooms, items and layouts before each save
   data/presets.js          starting room types and flavours
   data/sample.js           first-run sample workspace
   settings/registry.js     Settings engine: define, resolve, inherit
@@ -71,6 +77,7 @@ js/
   ui/drawer.js             settings drawer and its tabs
   ui/controls.js           setting controls generated from definitions
   ui/data-panel.js         backup download / import
+  ui/account-panel.js      Settings → Account: sign in with Google or an email link, sign out
   ui/theme.js              settings -> CSS variables
   ui/feedback.js           save status, undo toast
 ```
@@ -113,6 +120,16 @@ first version (how the item was before its first edit) is always kept, and an it
 keeps at most 50. Restoring (`Act.restoreVersion`) adds a new version. History is
 read only when a details panel opens, is included in backups, and history of
 deleted items is tidied away the next time Creation opens.
+
+**updatedAt.** Rooms, items and layouts carry `updatedAt` (ms). Actions don't set it:
+`js/data/stamps.js` compares records with how they were at the last save and stamps
+the changed ones just before saving. Syncing (Phase 3) uses it: latest change wins.
+
+**Accounts** are optional. `js/storage/account.js` loads Firebase Auth from the CDN
+(version pinned in `firebase-config.js`) only when the Account tab opens, an email
+sign-in link is opened, or the person was signed in last time. Setting
+`firebaseConfig` to null switches accounts off. Security comes from
+`firestore.rules` / `storage.rules`: each person can only reach `users/{their uid}`.
 All changes go through `Data.commit(fn, undoLabel?)`, usually via `Act.*`.
 
 **Changing the data shape:** bump `CURRENT` in `migrations.js` and add a step
