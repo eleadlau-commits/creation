@@ -1,0 +1,15 @@
+rules_version = '2';
+
+// Creation: each person can read and write only their own image files, under users/{their id}.
+// Uploads are limited to images of at most 25 MB. Nothing else can be read or written.
+// Paste this into Firebase console → Storage → Rules, then Publish.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /users/{uid}/{allPaths=**} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow write: if request.auth != null && request.auth.uid == uid
+                   && request.resource.size < 25 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+  }
+}

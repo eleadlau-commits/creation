@@ -2,6 +2,9 @@
 // Listeners re-render; storage saves after a short pause.
 
 import { Storage } from "../storage/storage.js";
+import { resetStamps, stampChanges } from "./stamps.js";
+
+Storage.beforeSave = stampChanges;
 
 export const Data = {
   state: null,
@@ -13,6 +16,7 @@ export const Data = {
   /** Replace the whole state (boot, import, reset). */
   load(state) {
     this.state = state;
+    resetStamps(state);
     this.undoSnap = null;
     this.emit(true);
   },

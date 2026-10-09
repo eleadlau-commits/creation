@@ -13,6 +13,7 @@ import { buildRoomView, roomKeydown } from "./room-view.js";
 import { renderDrawer } from "./drawer.js";
 import { renderDetails, closeDetails } from "./details.js";
 import { isTyping } from "../core/dom.js";
+import { Account } from "../storage/account.js";
 
 function renderMain() {
   if (UI.editingItem) return; // never rebuild under an open editor
@@ -30,6 +31,10 @@ export function startUI() {
   UI.renderDetails = renderDetails;
   Data.onUndoable = (label, undo) => Toast.show(label, undo);
   Storage.onStatus = refreshStatus;
+  Account.subscribe(() => {
+    if (UI.screen === "home") UI.render();
+    if (UI.drawer.open && UI.drawer.tab === "account") renderDrawer();
+  });
   Data.subscribe((replaced) => {
     if (replaced) UI.selection = null;
     UI.render();

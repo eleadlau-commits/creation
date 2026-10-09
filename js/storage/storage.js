@@ -13,6 +13,8 @@ export const Storage = {
   timer: null,
   pending: null, // the state waiting to be saved
   chain: Promise.resolve(),
+  /** Set by the data layer: runs just before each save (stamps changed records). */
+  beforeSave: null,
 
   /** Resolves with the saved workspace, or null on a first visit. */
   load() {
@@ -28,6 +30,7 @@ export const Storage = {
   saveNow(state) {
     clearTimeout(this.timer);
     this.pending = null;
+    this.beforeSave?.(state);
     this.chain = this.chain.then(() => Workspace.save(state)).then((ok) => {
       if (!this.pending) this.setStatus(ok ? "saved" : "error");
     });

@@ -8,6 +8,7 @@ import { migrate } from "./data/migrations.js";
 import { sampleWorkspace } from "./data/sample.js";
 import { Storage } from "./storage/storage.js";
 import { startUI } from "./ui/app.js";
+import { Account } from "./storage/account.js";
 
 let state = null;
 try {
@@ -20,6 +21,7 @@ Data.load(state || sampleWorkspace());
 if (firstRun) Storage.saveNow(Data.state);
 
 startUI();
+Account.start();
 
 // Tidy up history of items that no longer exist (kept until now so Undo could bring them back).
 Storage.history.keys().then((ids) => {
