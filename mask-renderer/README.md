@@ -10,7 +10,11 @@ feature in `app/features/renderer/`, and its rendering engine is in
 
 ## Open it
 
-The page uses JavaScript modules, so it needs a small local server. From this folder:
+**Without anything installed:** double-click `standalone/mask-renderer.html`. It's the whole page
+in one file, made by `python standalone.py` (which needs Node.js for esbuild). Run that again
+after changing anything in `app/`.
+
+**While working on it:** from this folder,
 
 ```
 python build.py serve
